@@ -67,12 +67,42 @@ def encode_text(filename, text, codes):
     with open(filename, 'ab') as f:
         f.write(byte_array)
 
-# encoding here
+def decode_header(filename):
+    # decode the header to get the frequency table
+    frequency = {}
+    with open(filename, 'rb') as f:
+        while True:
+            char = f.read(1)
+            if not char:
+                break
+            freq = int.from_bytes(f.read(4), byteorder='big')
+            frequency[char.decode('utf-8')] = freq
+    return frequency
 
+def decode_text(filename, tree):
+    # decode the encoded text using the Huffman tree
+    decoded_text = ""
+    with open(filename, 'rb') as f:
+        f.seek(len(frequency) * 5)  # Skip the header
+        encoded_data = f.read()
+        encoded_bits = ''.join(format(byte, '08b') for byte in encoded_data)
+        
+        current_node = tree
+        for bit in encoded_bits:
+            if bit == '0':
+                current_node = current_node.left
+            else:
+                current_node = current_node.right
+            
+            if current_node.char is not None:
+                decoded_text += current_node.char
+                current_node = tree
+
+    return decoded_text
 
 if __name__ == "__main__":
     # This is a basic example of how to use the tool to compress a file
-    input_file = "file.txt"
+    input_file = "path_to_input.txt"
     output_file = "path_to_output.huffbitsqueeze"
 
     frequency = get_frequency(input_file)
@@ -83,3 +113,12 @@ if __name__ == "__main__":
     with open(input_file, 'r', encoding='utf-8') as f:
         text = f.read()
     encode_text(output_file, text, codes)
+
+
+    # Decoding
+    # frequency = decode_header(output_file)
+    # tree = build_tree(frequency)
+    # decoded_text = decode_text(output_file, tree)
+
+    # with open("decoded_output.txt", 'w', encoding='utf-8') as f:
+    #     f.write(decoded_text)
